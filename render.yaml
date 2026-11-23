@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: kayal-expenses-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kayal-expenses-db
+          property: connectionString
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+databases:
+  - name: kayal-expenses-db
+    plan: free
+    region: oregon
+    databaseName: KayalExpenseDb
+    user: postgres

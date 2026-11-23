@@ -6,9 +6,31 @@ using expenceAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configure PostgreSQL Database Connection
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+// Configure port for Render / Docker environments
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
+// 1. Configure PostgreSQL Database Connection (supports local & Render DATABASE_URL)
+var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' or 'DATABASE_URL' not found.");
+
+var connectionString = rawConnectionString;
+if (rawConnectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+    rawConnectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+{
+    var uri = new Uri(rawConnectionString);
+    var userInfo = uri.UserInfo.Split(':');
+    var username = userInfo[0];
+    var password = userInfo.Length > 1 ? userInfo[1] : "";
+    var dbPort = uri.Port > 0 ? uri.Port : 5432;
+    var database = uri.AbsolutePath.TrimStart('/');
+
+    connectionString = $"Host={uri.Host};Port={dbPort};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;Include Error Detail=true";
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -121,12 +143,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 7. OpenAPI Endpoints & Swagger UI
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+// 7. OpenAPI Endpoints & Swagger UI (available in Development and Production for Render)
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 // Official Swagger UI endpoint at /swagger
 app.MapGet("/swagger", () => Results.Content(
@@ -183,9 +202,17 @@ app.MapGet("/swagger", () => Results.Content(
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapGet("/swagger/index.html", () => Results.Redirect("/swagger"));
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
+
 app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
