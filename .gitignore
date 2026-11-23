@@ -1,0 +1,30 @@
+## Build and Output directories
+bin/
+obj/
+out/
+publish/
+
+## Visual Studio & JetBrains & VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.ide
+.ionide/
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Rider & ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## OS Files
+.DS_Store
+Thumbs.db
