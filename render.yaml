@@ -7,6 +7,6 @@ services:
     region: oregon
     envVars:
       - key: DATABASE_URL
-        value: postgresql://neondb_owner:npg_HGSFb9NyT8kZ@ep-polished-meadow-bdzxy506-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require
+        value: postgresql://neondb_owner:npg_SkCZJuA5lFV6@ep-polished-meadow-bdzxy506-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
