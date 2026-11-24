@@ -76,7 +76,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
 
         // Ensure schema is updated with FullName and IsDelete columns in PostgreSQL
         try
